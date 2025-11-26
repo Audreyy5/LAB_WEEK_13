@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import java.util.Calendar
 
 class MovieRepository(private val movieService: MovieService) {
 
@@ -17,8 +18,17 @@ class MovieRepository(private val movieService: MovieService) {
     // for more info, see: https://kotlinlang.org/docs/flow.html#flows
     fun fetchMovies(): Flow<List<Movie>> {
         return flow {
-            // emit the list of popular movies from the API
-            emit(movieService.getPopularMovies(apiKey).results)
-        }.flowOn(Dispatchers.IO) // run coroutine on IO thread
+            val movies = movieService.getPopularMovies(apiKey).results
+
+            // FILTERING di Repository
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
+
+            val filtered = movies
+                .filter { it.releaseDate?.startsWith(currentYear) == true }
+                .sortedByDescending { it.popularity }
+
+            emit(filtered)
+        }.flowOn(Dispatchers.IO)
     }
+
 }
