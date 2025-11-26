@@ -1,36 +1,24 @@
 package com.example.test_lab_week_12
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.test_lab_week_12.api.MovieService
 import com.example.test_lab_week_12.model.Movie
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 
 class MovieRepository(private val movieService: MovieService) {
 
-    private val apiKey =
-        "e98ba98a83509f8bb5ed17cb0b5c0f43"
-
-    // LiveData that contains a list of movies
-    private val movieLiveData = MutableLiveData<List<Movie>>()
-    val movies: LiveData<List<Movie>>
-        get() = movieLiveData
-
-    // LiveData that contains an error message
-    private val errorLiveData = MutableLiveData<String>()
-    val error: LiveData<String>
-        get() = errorLiveData
+    private val apiKey = "e98ba98a83509f8bb5ed17cb0b5c0f43"
 
     // fetch movies from the API
-    suspend fun fetchMovies() {
-        try {
-            // get the list of popular movies from the API
-            val popularMovies = movieService.getPopularMovies(apiKey)
-            movieLiveData.postValue(popularMovies.results)
-        } catch (exception: Exception) {
-            // if an error occurs, post the error message
-            errorLiveData.postValue(
-                "An error occurred: ${exception.message}"
-            )
-        }
+    // this function returns a Flow of Movie objects
+    // a Flow is a type of coroutine that can emit multiple values
+    // for more info, see: https://kotlinlang.org/docs/flow.html#flows
+    fun fetchMovies(): Flow<List<Movie>> {
+        return flow {
+            // emit the list of popular movies from the API
+            emit(movieService.getPopularMovies(apiKey).results)
+        }.flowOn(Dispatchers.IO) // run coroutine on IO thread
     }
 }
